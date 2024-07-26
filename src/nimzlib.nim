@@ -1,4 +1,5 @@
 # https://datatracker.ietf.org/doc/html/rfc1951
+# https://github.com/nayuki/Simple-DEFLATE-decompressor
 import std/[
   bitops,
 ]
@@ -7,11 +8,11 @@ import nimzlib/checksums/adlers
 import nimzlib/io/[bitstreams, readers]
 import nimzlib/inflates
 
-export streams
+export inputStream, streams
 
 
 
-proc inflate*(s: Stream): Stream =
+proc inflate*(s: InputStream): Stream =
   let cmf = s.readUint8
   let cm = cmf and 0xf
   let cinfo = cmf shr 4
@@ -35,7 +36,7 @@ type
   StreamInflator* = ref object
     inflator: Inflator
 
-proc newStreamInflator*(s: Stream): StreamInflator =
+proc newStreamInflator*(s: InputStream): StreamInflator =
   let cmf = s.readUint8
   let cm = cmf and 0xf
   let cinfo = cmf shr 4
@@ -52,14 +53,14 @@ proc newStreamInflator*(s: Stream): StreamInflator =
   result.new
   result.inflator = newInflator(bs)
 
-proc inflate*(self: StreamInflator, sin: Stream = nil): Stream {.inline.} =
+proc inflate*(self: StreamInflator, sin: InputStream = nil): Stream {.inline.} =
   result = self.inflator.inflate(sin)
   result.setPosition(0)
 
 when isMainModule:
-  let si = newStreamInflator(newFileStream("out1.zlib"))
+  let si = newStreamInflator(newStreamInputStream(newFileStream("out1.zlib")))
   var data = si.inflate().readAll
   echo data.len
 
-  data = si.inflate(newFileStream("out2.zlib")).readAll
+  data = si.inflate(newStreamInputStream(newFileStream("out2.zlib"))).readAll
   echo data.len

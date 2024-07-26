@@ -1,21 +1,31 @@
 import std/[
   bitops,
+  net,
   streams,
 ]
 
-export streams
+import inputStream
 
+export inputStream, streams
 
 
 type
   BitStream* = ref object
-    s: Stream
+    s: InputStream
     curByte: uint8
     remainBits: int
 
-proc newBitStream*(s: Stream): BitStream =
+proc newBitStream*(s: InputStream): BitStream =
   result.new
   result.s = s
+
+proc newBitStream*(s: Stream): BitStream =
+  result.new
+  result.s = newStreamInputStream(s)
+
+proc newBitStream*(s: Socket): BitStream =
+  result.new
+  result.s = newSocketInputStream(s)
 
 proc getBitPos*(self: BitStream): int =
   doAssert self.remainBits in 0 ..< 8

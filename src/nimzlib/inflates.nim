@@ -27,7 +27,7 @@ proc newInflator*(bs: BitStream): Inflator =
 proc inflateUncompressed(self: Inflator): bool
 proc readHuffmans(self: Inflator): (HuffMan, HuffMan)
 proc inflateHuffman(self: Inflator, litLenHuffMan, distHuffman: Huffman)
-proc inflate*(self: Inflator, sin: Stream = nil): Stream =
+proc inflate*(self: Inflator, sin: InputStream = nil): Stream =
   if sin != nil:
     self.input = newBitStream(sin)
     self.output = newStringStream()
