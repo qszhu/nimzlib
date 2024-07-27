@@ -24,9 +24,9 @@ proc newInflator*(bs: BitStream): Inflator =
   result.output = newStringStream()
   result.dict = newDict(32768)
 
-proc inflateUncompressed(self: Inflator): bool
-proc readHuffmans(self: Inflator): (HuffMan, HuffMan)
-proc inflateHuffman(self: Inflator, litLenHuffMan, distHuffman: Huffman)
+proc inflateUncompressed(self: Inflator): bool {.gcsafe.}
+proc readHuffmans(self: Inflator): (HuffMan, HuffMan) {.gcsafe.}
+proc inflateHuffman(self: Inflator, litLenHuffMan, distHuffman: Huffman) {.gcsafe.}
 proc inflate*(self: Inflator, sin: InputStream = nil): Stream =
   if sin != nil:
     self.input = newBitStream(sin)
@@ -52,7 +52,7 @@ proc inflate*(self: Inflator, sin: InputStream = nil): Stream =
   self.output.setPosition(0)
   self.output
 
-proc inflateUncompressed(self: Inflator): bool =
+proc inflateUncompressed(self: Inflator): bool {.gcsafe.} =
   # TODO: optimize
   while self.input.getBitPos != 0: discard self.input.readInt(1)
   let l = self.input.readInt(16)
@@ -67,7 +67,7 @@ proc inflateUncompressed(self: Inflator): bool =
 
 const CODE_LEN_FILL_ORDER = [16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15]
 
-proc readHuffmans(self: Inflator): (HuffMan, HuffMan) =
+proc readHuffmans(self: Inflator): (HuffMan, HuffMan) {.gcsafe.} =
   let hlit = self.input.readInt(5) + 257
   let hdist = self.input.readInt(5) + 1
   let hclen = self.input.readInt(4) + 4
@@ -119,9 +119,9 @@ proc readHuffmans(self: Inflator): (HuffMan, HuffMan) =
   let distHuffman = newHuffman(distCodeLens)
   (litLenHuffman, distHuffman)
 
-proc readRunLength(self: Inflator, s: int): int
-proc readDistance(self: Inflator, s: int): int
-proc inflateHuffman(self: Inflator, litLenHuffMan, distHuffman: Huffman) =
+proc readRunLength(self: Inflator, s: int): int {.gcsafe.}
+proc readDistance(self: Inflator, s: int): int {.gcsafe.}
+proc inflateHuffman(self: Inflator, litLenHuffMan, distHuffman: Huffman) {.gcsafe.} =
   while true:
     let s = litLenHuffman.decode(self.input)
     if s == 256: break
@@ -139,7 +139,7 @@ proc inflateHuffman(self: Inflator, litLenHuffMan, distHuffman: Huffman) =
 
       self.dict.copy(dist, runLen, self.output)
 
-proc readRunLength(self: Inflator, s: int): int =
+proc readRunLength(self: Inflator, s: int): int {.gcsafe.} =
   assert s in 257 .. 287
 
   if s <= 264:
@@ -154,7 +154,7 @@ proc readRunLength(self: Inflator, s: int): int =
 
   raise newException(ValueError, "Reserved run length: " & $s)
 
-proc readDistance(self: Inflator, s: int): int =
+proc readDistance(self: Inflator, s: int): int {.gcsafe.} =
   assert s in 0 .. 31
 
   if s <= 3:
