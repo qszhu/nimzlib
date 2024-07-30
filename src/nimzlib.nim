@@ -58,6 +58,11 @@ proc inflate*(self: StreamInflator, sin: InputStream = nil): Stream {.inline.} =
   result.setPosition(0)
 
 when isMainModule:
+  # --profiler:on --stackTrace:on
+  # --profiler:off --stackTrace:on -d:memProfiler
+  when compileOption("profiler") or defined(memProfiler):
+    import nimprof
+
   let si = newStreamInflator(newStreamInputStream(newFileStream("out1.zlib")))
   var data = si.inflate().readAll
   echo data.len

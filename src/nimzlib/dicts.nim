@@ -8,6 +8,7 @@ type
   Dict* = ref object
     data: seq[uint8]
     index, length: int
+    buf: array[65536, uint8]
 
 proc newDict*(size: int): Dict =
   result.new
@@ -26,6 +27,7 @@ proc copy*(self: Dict, dist, runLen: int, os: Stream) =
 
   for i in 0 ..< runLen:
     let b = self.data[ri]
-    ri = (ri + 1) mod self.data.len
-    os.write(b)
+    self.buf[i] = b
     self.add(b)
+    ri = (ri + 1) mod self.data.len
+  os.writeData(self.buf.addr, runLen)
