@@ -27,7 +27,8 @@ method readUint8*(self: StreamInputStream): uint8 =
   self.s.readUint8
 
 method readUint32BE*(self: StreamInputStream): uint32 =
-  self.s.readUint32
+  for _ in 0 ..< 4:
+    result = (result shl 8) or self.readUint8
 
 type
   SocketInputStream* = ref object of InputStream
